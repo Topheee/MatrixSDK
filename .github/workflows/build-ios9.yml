@@ -13,8 +13,8 @@ jobs:
     - name: Checkout matrix-ios-sdk
       uses: actions/checkout@v2
       with:
-        repository: matrix-org/matrix-ios-sdk
-        ref: v0.18.12
+        repository: Topheee/matrix-ios-sdk
+        ref: origin/feature/iOS-9-compat
         path: matrix-ios-sdk
         
     - name: Install Pods
