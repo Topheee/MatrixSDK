@@ -1,6 +1,6 @@
 # MatrixSDK
 
-A SwiftPM package containting a binary framework built from [matrix-org/matrix-ios-sdk](https://github.com/matrix-org/matrix-ios-sdk/pull/983).
+A SwiftPM package containting a binary framework built from my [fork] of [matrix-org/matrix-ios-sdk](https://github.com/matrix-org/matrix-ios-sdk/).
 
 The framework contains the following binaries:
 - iOS (arm64)
