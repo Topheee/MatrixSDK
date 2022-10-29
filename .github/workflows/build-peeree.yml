@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ios, simulator, macos, catalyst]
+        platform: [ios, simulator]
 
     runs-on: macos-latest
 
