@@ -103,7 +103,7 @@ jobs:
         
     - name: Update Package Manifest
       run: |
-        swift package compute-checksum matrix-ios-sdk/build/MatrixSDK.xcframework.zip > checksum
+        swift package compute-checksum MatrixSDK.xcframework.zip > checksum
         CHECKSUM=$(cat checksum)
         cat checksum
         swift generate-package.swift "https://github.com/${{ github.repository_owner }}/MatrixSDK/releases/download/${{ env.RELEASE_VERSION }}/MatrixSDK.xcframework.zip" "$CHECKSUM"
@@ -135,7 +135,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: matrix-ios-sdk/build/MatrixSDK.xcframework.zip
+        asset_path: MatrixSDK.xcframework.zip
         asset_name: MatrixSDK.xcframework.zip
         asset_content_type: application/zip
         
