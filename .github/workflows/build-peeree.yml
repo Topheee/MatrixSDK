@@ -64,14 +64,6 @@ jobs:
         esac
         xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-iOS -destination "$destination" -archivePath "build/MatrixSDK-$archive_path_suffix" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO $flags
 
-    - name: Copy dSYM
-      working-directory: matrix-ios-sdk
-      run: |
-        mkdir -p build/MatrixSDK-iOS.xcarchive/dSYMs
-        ls build/MatrixSDK-iOS.xcarchive/dSYMs
-        # somehow the folder in DerivedData has a mangled name, so we are using the asterisk here
-        cp /Users/runner/Library/Developer/Xcode/DerivedData/MatrixSDK-*/Build/Intermediates.noindex/ArchiveIntermediates/MatrixSDK-iOS/BuildProductsPath/Release-iphoneos/MatrixSDK.framework.dSYM build/MatrixSDK-iOS.xcarchive/dSYMs
-
     - name: Set Bundle Version
       working-directory: matrix-ios-sdk/build
       run: |
@@ -108,7 +100,26 @@ jobs:
 
     - name: Make XCFramework
       run: |
-        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK-iOS.framework.dSYM" -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK-iOSSimulator.framework.dSYM" -output MatrixSDK.xcframework
+        iOSBCMaps=()
+        
+        echo "Finding iOS Bitcode Symbol Maps"
+        while IFS= read -d '' -r filename; do
+            iOSBCMaps+=("$filename")
+        done < <(find "$(pwd -P)"/MatrixSDK-iOS.xcarchive -name "*.bcsymbolmap" -print0)
+
+        set +u
+        iOSBCMapCount=${#iOSBCMaps[@]}
+        set -u
+        
+        iOSDebugSymbols=""
+        
+        echo "Generating iOS Bitcode Symbol Map command"
+        for ((i=0;i<iOSBCMapCount;i++)); do
+          iOSDebugSymbols+=" -debug-symbols ${iOSBCMaps[i]}"
+        done
+        
+        echo "Creating XCFramework"
+        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" $iOSDebugSymbols -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK.framework.dSYM" -output MatrixSDK.xcframework
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
         
     - name: Update Package Manifest
