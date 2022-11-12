@@ -67,7 +67,8 @@ jobs:
     - name: Copy dSYM
       working-directory: matrix-ios-sdk
       run: |
-        mkdir build/MatrixSDK-iOS.xcarchive/dSYMs
+        mkdir -p build/MatrixSDK-iOS.xcarchive/dSYMs
+        ls build/MatrixSDK-iOS.xcarchive/dSYMs
         # somehow the folder in DerivedData has a mangled name, so we are using the asterisk here
         cp /Users/runner/Library/Developer/Xcode/DerivedData/MatrixSDK-*/Build/Intermediates.noindex/ArchiveIntermediates/MatrixSDK-iOS/BuildProductsPath/Release-iphoneos/MatrixSDK.framework.dSYM build/MatrixSDK-iOS.xcarchive/dSYMs
 
