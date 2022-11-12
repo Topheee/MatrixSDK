@@ -63,7 +63,14 @@ jobs:
             ;;
         esac
         xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-iOS -destination "$destination" -archivePath "build/MatrixSDK-$archive_path_suffix" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO $flags
-      
+
+    - name: Copy dSYM
+      working-directory: matrix-ios-sdk
+      run: |
+        mkdir build/MatrixSDK-iOS.xcarchive/dSYMs
+        # somehow the folder in DerivedData has a mangled name, so we are using the asterisk here
+        cp /Users/runner/Library/Developer/Xcode/DerivedData/MatrixSDK-*/Build/Intermediates.noindex/ArchiveIntermediates/MatrixSDK-iOS/BuildProductsPath/Release-iphoneos/MatrixSDK.framework.dSYM build/MatrixSDK-iOS.xcarchive/dSYMs
+
     - name: Set Bundle Version
       working-directory: matrix-ios-sdk/build
       run: |
