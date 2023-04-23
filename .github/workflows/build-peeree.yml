@@ -119,7 +119,7 @@ jobs:
         done
         
         echo "Creating XCFramework"
-        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" $iOSDebugSymbols -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK.framework.dSYM" -output MatrixSDK.xcframework
+        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" $iOSDebugSymbols -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK.framework.dSYM" -output MatrixSDK.xcframework BUILD_LIBRARY_FOR_DISTRIBUTION=YES
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
         
     - name: Update Package Manifest
@@ -141,7 +141,7 @@ jobs:
         
     - name: Create Release
       id: create-release
-      uses: actions/create-release@v1
+      uses: actions/create-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -151,7 +151,7 @@ jobs:
         prerelease: false
         
     - name: Upload XCFramework
-      uses: actions/upload-release-asset@v1
+      uses: actions/upload-release-asset@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -161,7 +161,7 @@ jobs:
         asset_content_type: application/zip
         
     - name: Upload Checksum
-      uses: actions/upload-release-asset@v1
+      uses: actions/upload-release-asset@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
