@@ -13,8 +13,8 @@ func packageString(url: String, checksum: String) -> String {
         ],
         dependencies: [
             .package(url: "https://github.com/realm/realm-swift", exact: "10.27.0"),
-            .package(url: "https://github.com/SwiftyBeaver/SwiftyBeaver", exact: "1.9.5")
-            .package(url: "https://gitlab.matrix.org/matrix-org/olm", from: "3.2.5")
+            .package(url: "https://github.com/SwiftyBeaver/SwiftyBeaver", exact: "1.9.5"),
+            .package(url: "https://gitlab.matrix.org/matrix-org/olm", from: "3.2.5"),
             .package(url: "https://github.com/Topheee/MatrixSDKCrypto", from: "1.0.0")
         ],
         targets: [
