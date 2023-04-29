@@ -14,6 +14,6 @@ let package = Package(
         .package(url: "https://github.com/Topheee/MatrixSDKCrypto", from: "1.1.0")
     ],
     targets: [
-        .binaryTarget(name: "MatrixSDK", url: "https://github.com/Topheee/MatrixSDK/releases/download/v0.26.13/MatrixSDK.xcframework.zip", checksum: "ad4b318397390c76896ca43a85ef5fa36fd7542fdbef3ad570ab829dfcfc5b0d", dependencies: ["Realm", "SwiftyBeaver", "OLMKit", "MatrixSDKCrypto"])
+        .binaryTarget(name: "MatrixSDK", url: "https://github.com/Topheee/MatrixSDK/releases/download/v0.26.13/MatrixSDK.xcframework.zip", dependencies: ["Realm", "SwiftyBeaver", "OLMKit", "MatrixSDKCrypto"], checksum: "ad4b318397390c76896ca43a85ef5fa36fd7542fdbef3ad570ab829dfcfc5b0d")
     ]
 )

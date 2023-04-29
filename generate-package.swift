@@ -18,7 +18,7 @@ func packageString(url: String, checksum: String) -> String {
             .package(url: "https://github.com/Topheee/MatrixSDKCrypto", from: "1.1.0")
         ],
         targets: [
-            .binaryTarget(name: "MatrixSDK", url: "\(url)", checksum: "\(checksum)", dependencies: ["Realm", "SwiftyBeaver", "OLMKit", "MatrixSDKCrypto"])
+            .binaryTarget(name: "MatrixSDK", url: "\(url)", checksum: "\(checksum)")
         ]
     )
     
