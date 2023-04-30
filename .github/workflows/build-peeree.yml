@@ -133,9 +133,13 @@ jobs:
         
         echo "Creating XCFramework"
         frameworks=""
-        for archive_path_suffix in iOS iOSSimulator macOS; do
+        for archive_path_suffix in iOS iOSSimulator; do
           frameworks="${frameworks} -framework MatrixSDK-${archive_path_suffix}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols $(pwd -P)/MatrixSDK-${archive_path_suffix}.xcarchive/dSYMs/MatrixSDK.framework.dSYM"
         done
+        
+        # somehow the macOS target does not produce a dSYM file
+        frameworks="${frameworks} -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework
+        
         xcodebuild -create-xcframework $frameworks -output MatrixSDK.xcframework
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
         
