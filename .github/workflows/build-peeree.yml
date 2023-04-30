@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ios, simulator, macos]
+        platform: [ios, simulator, macos, catalyst]
 
     runs-on: macos-latest
 
@@ -61,9 +61,9 @@ jobs:
             ;;
           catalyst)
             destination="generic/platform=macOS,variant=Mac Catalyst"
-            flags='MACOSX_DEPLOYMENT_TARGET=10.15'
+            flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
             archive_path_suffix=MacCatalyst
-            scheme=MatrixSDK-macOS
+            scheme=MatrixSDK-iOS
             ;;
         esac
         xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme "$scheme" -destination "$destination" -archivePath "build/MatrixSDK-$archive_path_suffix" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO $flags
@@ -71,11 +71,16 @@ jobs:
     - name: Set Bundle Version
       working-directory: matrix-ios-sdk/build
       run: |
-        case ${{ matrix.platform }} in ios) archive_end=iOS ;; simulator) archive_end=iOSSimulator ;; macos) archive_end=macOS ;; catalyst) archive_end=MacCatalyst ;; esac
+        case ${{ matrix.platform }} in
+        ios) plist_path='MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist' ;;
+        simulator) plist_path='MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist' ;;
+        macos) plist_path='MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist' ;;
+        catalyst) plist_path='MatrixSDK-MacCatalyst.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist' ;;
+        esac
         VERSION=${{ env.RELEASE_VERSION }}
         SHORT_VERSION=${VERSION#v}
-        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION     "MatrixSDK-${archive_end}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist"
-        plutil -insert CFBundleVersion            -string $GITHUB_RUN_NUMBER "MatrixSDK-${archive_end}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist"
+        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION     "${plist_path}"
+        plutil -insert CFBundleVersion            -string $GITHUB_RUN_NUMBER "${plist_path}"
 
     - name: "Save ${{ matrix.platform }} Framework"
       uses: actions/upload-artifact@v3
@@ -105,6 +110,10 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: macos Framework
+    - name: Download Catalyst Framework
+      uses: actions/download-artifact@v3
+      with:
+        name: catalyst Framework
 
     - name: Make XCFramework
       run: |
@@ -127,7 +136,7 @@ jobs:
         done
         
         echo "Creating XCFramework"
-        for archive_path_suffix in iOS iOSSimulator macOS; do
+        for archive_path_suffix in iOS iOSSimulator macOS MacCatalyst; do
           frameworks="${frameworks} -framework 'MatrixSDK-${archive_path_suffix}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework' -debug-symbols '$(pwd -P)/MatrixSDK-${archive_path_suffix}.xcarchive/dSYMs/MatrixSDK.framework.dSYM'"
         done
         xcodebuild -create-xcframework $frameworks -output MatrixSDK.xcframework
