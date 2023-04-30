@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ios, simulator, macos, catalyst]
+        platform: [ios, simulator, macos]
 
     runs-on: macos-latest
 
@@ -105,10 +105,6 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: macos Framework
-    - name: Download Catalyst Framework
-      uses: actions/download-artifact@v3
-      with:
-        name: catalyst Framework
 
     - name: Make XCFramework
       run: |
@@ -131,7 +127,7 @@ jobs:
         done
         
         echo "Creating XCFramework"
-        for archive_path_suffix in iOS iOSSimulator macOS MacCatalyst; do
+        for archive_path_suffix in iOS iOSSimulator macOS; do
           frameworks="${frameworks} -framework 'MatrixSDK-${archive_path_suffix}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework' -debug-symbols '$(pwd -P)/MatrixSDK-${archive_path_suffix}.xcarchive/dSYMs/MatrixSDK.framework.dSYM'"
         done
         xcodebuild -create-xcframework $frameworks -output MatrixSDK.xcframework
