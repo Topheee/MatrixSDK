@@ -4,13 +4,13 @@ on: push
 
 env:
   # change this variable to a release of https://github.com/matrix-org/matrix-ios-sdk/releases
-  RELEASE_VERSION: v0.26.16
+  RELEASE_VERSION: v0.26.17
 
 jobs:
   build:
     strategy:
       matrix:
-        platform: [ios, simulator]
+        platform: [ios, simulator, macos]
 
     runs-on: macos-latest
 
@@ -97,6 +97,10 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: simulator Framework
+    - name: Download macOS Framework
+      uses: actions/download-artifact@v3
+      with:
+        name: macos Framework
 
     - name: Make XCFramework
       run: |
@@ -119,7 +123,7 @@ jobs:
         done
         
         echo "Creating XCFramework"
-        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" $iOSDebugSymbols -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK.framework.dSYM" -output MatrixSDK.xcframework
+        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" $iOSDebugSymbols -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK.framework.dSYM"  -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-macOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" -output MatrixSDK.xcframework
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
         
     - name: Update Package Manifest
