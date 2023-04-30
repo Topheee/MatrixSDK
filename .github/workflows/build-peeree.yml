@@ -138,7 +138,7 @@ jobs:
         done
         
         # somehow the macOS target does not produce a dSYM file
-        frameworks="${frameworks} -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework
+        frameworks="${frameworks} -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework"
         
         xcodebuild -create-xcframework $frameworks -output MatrixSDK.xcframework
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
