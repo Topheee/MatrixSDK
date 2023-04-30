@@ -132,6 +132,7 @@ jobs:
         done
         
         echo "Creating XCFramework"
+        frameworks=""
         for archive_path_suffix in iOS iOSSimulator macOS; do
           frameworks="${frameworks} -framework 'MatrixSDK-${archive_path_suffix}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework' -debug-symbols '$(pwd -P)/MatrixSDK-${archive_path_suffix}.xcarchive/dSYMs/MatrixSDK.framework.dSYM'"
         done
