@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ios, simulator, macos]
+        platform: [ios, simulator, macos, catalyst]
 
     runs-on: macos-latest
 
@@ -45,24 +45,28 @@ jobs:
             destination="generic/platform=iOS"
             flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
             archive_path_suffix=iOS
+            scheme=MatrixSDK-iOS
             ;;
           simulator)
             destination="generic/platform=iOS Simulator"
             flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
             archive_path_suffix=iOSSimulator
+            scheme=MatrixSDK-iOS
             ;;
           macos)
             destination="generic/platform=macOS"
-            flags='MACOSX_DEPLOYMENT_TARGET=10.12'
+            flags='MACOSX_DEPLOYMENT_TARGET=10.15'
             archive_path_suffix=macOS
+            scheme=MatrixSDK-macOS
             ;;
           catalyst)
             destination="generic/platform=macOS,variant=Mac Catalyst"
-            flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
+            flags='MACOSX_DEPLOYMENT_TARGET=10.15'
             archive_path_suffix=MacCatalyst
+            scheme=MatrixSDK-macOS
             ;;
         esac
-        xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-iOS -destination "$destination" -archivePath "build/MatrixSDK-$archive_path_suffix" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO $flags
+        xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme "$scheme" -destination "$destination" -archivePath "build/MatrixSDK-$archive_path_suffix" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO $flags
 
     - name: Set Bundle Version
       working-directory: matrix-ios-sdk/build
@@ -101,6 +105,10 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: macos Framework
+    - name: Download Catalyst Framework
+      uses: actions/download-artifact@v3
+      with:
+        name: catalyst Framework
 
     - name: Make XCFramework
       run: |
@@ -123,7 +131,10 @@ jobs:
         done
         
         echo "Creating XCFramework"
-        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" $iOSDebugSymbols -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-iOSSimulator.xcarchive/dSYMs/MatrixSDK.framework.dSYM"  -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols "$(pwd -P)/MatrixSDK-macOS.xcarchive/dSYMs/MatrixSDK.framework.dSYM" -output MatrixSDK.xcframework
+        for archive_path_suffix in iOS iOSSimulator macOS MacCatalyst; do
+          frameworks="${frameworks} -framework 'MatrixSDK-${archive_path_suffix}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework' -debug-symbols '$(pwd -P)/MatrixSDK-${archive_path_suffix}.xcarchive/dSYMs/MatrixSDK.framework.dSYM'"
+        done
+        xcodebuild -create-xcframework $frameworks -output MatrixSDK.xcframework
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
         
     - name: Update Package Manifest
