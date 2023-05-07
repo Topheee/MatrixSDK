@@ -1,112 +1,170 @@
 name: Build and Release
 
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release'
-        required: true
-        default: 'v0.0.0'
+on: push
+
+env:
+  # change this variable to a release of https://github.com/matrix-org/matrix-ios-sdk/releases
+  RELEASE_VERSION: v0.26.18
 
 jobs:
   build:
+    strategy:
+      matrix:
+        platform: [ios, simulator, macos]
 
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       
     - name: Checkout matrix-ios-sdk
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
-        repository: matrix-org/matrix-ios-sdk
-        ref: ${{ github.event.inputs.version }}
+        repository: Topheee/matrix-ios-sdk
+        ref: swift-package-${{ env.RELEASE_VERSION }}
         path: matrix-ios-sdk
+
+    - name: Cache CocoaPods
+      id: cache-cocoapods
+      uses: actions/cache@v3
+      with:
+        # CocoaPods
+        path: Pods
+        key: cocoapods-deps-${{ hashFiles('**/Podfile.lock') }}
         
-    - name: Install Pods
+    - if: ${{ steps.cache-cocoapods.outputs.cache-hit != 'true' }}
+      name: Install Pods
       working-directory: matrix-ios-sdk
       run: pod install
-      
-    - name: Build for iOS
+
+    - name: "Build ${{ matrix.platform }}"
       working-directory: matrix-ios-sdk
-      run: xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-iOS -destination "generic/platform=iOS" -archivePath build/MatrixSDK-iOS SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES IPHONEOS_DEPLOYMENT_TARGET=11.0 GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO
-      
-    - name: Build for Simulator
-      working-directory: matrix-ios-sdk
-      run: xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-iOS -destination "generic/platform=iOS Simulator" -archivePath build/MatrixSDK-iOSSimulator SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES IPHONEOS_DEPLOYMENT_TARGET=11.0 GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO
-      
-    - name: Build for macOS
-      working-directory: matrix-ios-sdk
-      run: xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-macOS -destination "generic/platform=macOS" -archivePath build/MatrixSDK-macOS SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES MACOSX_DEPLOYMENT_TARGET=10.12 GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO
-      
-    - name: Build for Catalyst
-      working-directory: matrix-ios-sdk
-      run: xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme MatrixSDK-iOS -destination "generic/platform=macOS,variant=Mac Catalyst" -archivePath ./build/MatrixSDK-MacCatalyst SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES IPHONEOS_DEPLOYMENT_TARGET=13.0 GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO
-      
+      run: |
+        case "${{ matrix.platform }}" in
+          ios)
+            destination="generic/platform=iOS"
+            flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
+            archive_path_suffix=iOS
+            scheme=MatrixSDK-iOS
+            ;;
+          simulator)
+            destination="generic/platform=iOS Simulator"
+            flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
+            archive_path_suffix=iOSSimulator
+            scheme=MatrixSDK-iOS
+            ;;
+          macos)
+            destination="generic/platform=macOS"
+            flags='MACOSX_DEPLOYMENT_TARGET=10.15'
+            archive_path_suffix=macOS
+            scheme=MatrixSDK-macOS
+            ;;
+          catalyst)
+            destination="generic/platform=macOS,variant=Mac Catalyst"
+            flags='IPHONEOS_DEPLOYMENT_TARGET=13.0'
+            archive_path_suffix=MacCatalyst
+            scheme=MatrixSDK-iOS
+            ;;
+        esac
+        xcodebuild archive -workspace MatrixSDK.xcworkspace -scheme "$scheme" -destination "$destination" -archivePath "build/MatrixSDK-$archive_path_suffix" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS=NO $flags
+
     - name: Set Bundle Version
       working-directory: matrix-ios-sdk/build
       run: |
-        VERSION=${{ github.event.inputs.version }}
+        case ${{ matrix.platform }} in
+        ios) plist_path='MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist' ;;
+        simulator) plist_path='MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist' ;;
+        macos) plist_path='MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist' ;;
+        catalyst) plist_path='MatrixSDK-MacCatalyst.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist' ;;
+        esac
+        VERSION=${{ env.RELEASE_VERSION }}
         SHORT_VERSION=${VERSION#v}
-        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist
-        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist
-        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist
-        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION MatrixSDK-MacCatalyst.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist
-        plutil -insert CFBundleVersion -string $GITHUB_RUN_NUMBER MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist
-        plutil -insert CFBundleVersion -string $GITHUB_RUN_NUMBER MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Info.plist
-        plutil -insert CFBundleVersion -string $GITHUB_RUN_NUMBER MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist
-        plutil -insert CFBundleVersion -string $GITHUB_RUN_NUMBER MatrixSDK-MacCatalyst.xcarchive/Products/Library/Frameworks/MatrixSDK.framework/Resources/Info.plist
-      
+        plutil -insert CFBundleShortVersionString -string $SHORT_VERSION     "${plist_path}"
+        plutil -insert CFBundleVersion            -string $GITHUB_RUN_NUMBER "${plist_path}"
+
+    - name: "Save ${{ matrix.platform }} Framework"
+      uses: actions/upload-artifact@v3
+      with:
+        name: "${{ matrix.platform }} Framework"
+        path: matrix-ios-sdk/build/*.xcarchive
+
+  link:
+    # Compile platform-specific frameworks into a fat framework.
+    name: Produce Framework
+    needs: build
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download iOS Framework
+      uses: actions/download-artifact@v3
+      with:
+        name: ios Framework
+    - name: Download iOS Simulator Framework
+      uses: actions/download-artifact@v3
+      with:
+        name: simulator Framework
+    - name: Download macOS Framework
+      uses: actions/download-artifact@v3
+      with:
+        name: macos Framework
+
     - name: Make XCFramework
-      working-directory: matrix-ios-sdk/build
       run: |
-        xcodebuild -create-xcframework -framework MatrixSDK-iOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -framework MatrixSDK-iOSSimulator.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -framework MatrixSDK-MacCatalyst.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -output MatrixSDK.xcframework
+        iOSBCMaps=()
+        
+        echo "Finding iOS Bitcode Symbol Maps"
+        while IFS= read -d '' -r filename; do
+            iOSBCMaps+=("$filename")
+        done < <(find "$(pwd -P)"/MatrixSDK-iOS.xcarchive -name "*.bcsymbolmap" -print0)
+
+        set +u
+        iOSBCMapCount=${#iOSBCMaps[@]}
+        set -u
+        
+        iOSDebugSymbols=""
+        
+        echo "Generating iOS Bitcode Symbol Map command"
+        for ((i=0;i<iOSBCMapCount;i++)); do
+          iOSDebugSymbols="${iOSDebugSymbols} -debug-symbols ${iOSBCMaps[i]}"
+        done
+        
+        echo "Creating XCFramework"
+        frameworks=""
+        for archive_path_suffix in iOS iOSSimulator; do
+          frameworks="${frameworks} -framework MatrixSDK-${archive_path_suffix}.xcarchive/Products/Library/Frameworks/MatrixSDK.framework -debug-symbols $(pwd -P)/MatrixSDK-${archive_path_suffix}.xcarchive/dSYMs/MatrixSDK.framework.dSYM"
+        done
+        
+        # somehow the macOS target does not produce a dSYM file
+        frameworks="${frameworks} -framework MatrixSDK-macOS.xcarchive/Products/Library/Frameworks/MatrixSDK.framework"
+        
+        xcodebuild -create-xcframework $frameworks -output MatrixSDK.xcframework
         zip -ry MatrixSDK.xcframework.zip MatrixSDK.xcframework
         
     - name: Update Package Manifest
       run: |
-        swift package compute-checksum matrix-ios-sdk/build/MatrixSDK.xcframework.zip > checksum
-        CHECKSUM=$(cat checksum)
-        cat checksum
-        swift generate-package.swift "https://github.com/${{ github.repository_owner }}/MatrixSDK/releases/download/${{ github.event.inputs.version }}/MatrixSDK.xcframework.zip" "$CHECKSUM"
+        swift package compute-checksum MatrixSDK.xcframework.zip > MatrixSDK.xcframework.zip.checksum
+        swift generate-package.swift "https://github.com/${{ github.repository_owner }}/MatrixSDK/releases/download/${{ env.RELEASE_VERSION }}/MatrixSDK.xcframework.zip" "$(cat MatrixSDK.xcframework.zip.checksum)"
         
     - name: Push and Tag
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
         git add Package.swift
-        git commit -m "Release ${{ github.event.inputs.version }}"
+        git commit -m "Release ${{ env.RELEASE_VERSION }}"
         git push
-        git tag ${{ github.event.inputs.version }}
-        git push origin ${{ github.event.inputs.version }}
+        git tag ${{ env.RELEASE_VERSION }}
+        git push origin ${{ env.RELEASE_VERSION }}
         
     - name: Create Release
       id: create-release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: ncipollo/release-action@v1
       with:
-        tag_name: ${{ github.event.inputs.version }}
-        release_name: ${{ github.event.inputs.version }}
+        artifacts: "MatrixSDK.xcframework.zip,MatrixSDK.xcframework.zip.checksum"
+        tag: ${{ env.RELEASE_VERSION }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        name: ${{ env.RELEASE_VERSION }}
         draft: false
         prerelease: false
-        
-    - name: Upload XCFramework
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: matrix-ios-sdk/build/MatrixSDK.xcframework.zip
-        asset_name: MatrixSDK.xcframework.zip
-        asset_content_type: application/zip
-        
-    - name: Upload Checksum
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: checksum
-        asset_name: MatrixSDK.xcframework.zip.checksum
-        asset_content_type: text/plain
