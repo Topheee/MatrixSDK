@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.6
 
 import PackageDescription
 
@@ -8,6 +8,6 @@ let package = Package(
         .library(name: "MatrixSDK", targets: ["MatrixSDK"])
     ],
     targets: [
-        .binaryTarget(name: "MatrixSDK", url: "https://github.com/niochat/MatrixSDK/releases/download/v0.23.2/MatrixSDK.xcframework.zip", checksum: "8607bb2ddaf48ff75f7c2e4da69225c1f4a6d05f33486bd6519e6cc99600e8bb")
+        .binaryTarget(name: "MatrixSDK", url: "https://github.com/Topheee/MatrixSDK/releases/download/v0.26.18/MatrixSDK.xcframework.zip", checksum: "473e24ee796953c0357f2e2d88522dedc70d045864d232fb8aff8d813ae4e2dc")
     ]
 )
