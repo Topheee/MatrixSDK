@@ -4,7 +4,7 @@ on: push
 
 env:
   # change this variable to a release of https://github.com/matrix-org/matrix-ios-sdk/releases
-  RELEASE_VERSION: v0.27.2
+  RELEASE_VERSION: v0.27.3
 
 jobs:
   build:
