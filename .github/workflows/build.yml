@@ -4,7 +4,7 @@ on: push
 
 env:
   # change this variable to a release of https://github.com/matrix-org/matrix-ios-sdk/releases
-  RELEASE_VERSION: v0.27.6
+  RELEASE_VERSION: v0.27.18
 
 jobs:
   build:
@@ -12,13 +12,13 @@ jobs:
       matrix:
         platform: [ios, simulator, macos]
 
-    runs-on: macos-latest
+    # this should match https://github.com/matrix-org/matrix-ios-sdk/blob/develop/.github/workflows/ci-integration-tests.yml
+    # there is another mention of this version in this file down below!
+    runs-on: macos-26
 
     steps:
-    - uses: actions/checkout@v3
-      
     - name: Checkout matrix-ios-sdk
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         repository: Topheee/matrix-ios-sdk
         ref: swift-package-${{ env.RELEASE_VERSION }}
@@ -26,7 +26,7 @@ jobs:
 
     - name: Cache CocoaPods
       id: cache-cocoapods
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       with:
         # CocoaPods
         path: Pods
@@ -83,7 +83,7 @@ jobs:
         plutil -insert CFBundleVersion            -string $GITHUB_RUN_NUMBER "${plist_path}"
 
     - name: "Save ${{ matrix.platform }} Framework"
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: "${{ matrix.platform }} Framework"
         path: matrix-ios-sdk/build/*.xcarchive
@@ -93,21 +93,22 @@ jobs:
     name: Produce Framework
     needs: build
 
-    runs-on: macos-latest
+    # this should match https://github.com/matrix-org/matrix-ios-sdk/blob/develop/.github/workflows/ci-integration-tests.yml
+    runs-on: macos-26
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
 
     - name: Download iOS Framework
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v8
       with:
         name: ios Framework
     - name: Download iOS Simulator Framework
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v8
       with:
         name: simulator Framework
     - name: Download macOS Framework
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v8
       with:
         name: macos Framework
 
