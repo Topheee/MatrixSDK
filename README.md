@@ -13,6 +13,7 @@ These binaries are currently not included:
 ## Installation
 
 To add MatrixSDK to your Xcode project, choose `File | Swift Packages | Add Package Dependency...` and enter the following url.
+
 ```
 https://github.com/Topheee/MatrixSDK
 ```
