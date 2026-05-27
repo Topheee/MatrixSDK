@@ -17,7 +17,7 @@ To add MatrixSDK to your Xcode project, choose `File | Swift Packages | Add Pack
 https://github.com/Topheee/MatrixSDK
 ```
 
-To be able to debug the library in your derived project, clone the original [matrix-ios-sdk](https://github.com/matrix-org/matrix-ios-sdk).
+To debug the library in your derived project, clone the original [matrix-ios-sdk](https://github.com/matrix-org/matrix-ios-sdk).
 Then, in your Xcode project, add an LLDB init file at the top of project named `LLDBInitFile` and map the source path generated in this build to the path where you cloned the project to:
 ```
 settings set target.source-map /Users/runner/work/MatrixSDK/MatrixSDK/matrix-ios-sdk/MatrixSDK /Users/christopher/Documents/Development/Xcode/iOS/third_party/matrix-ios-sdk/MatrixSDK
